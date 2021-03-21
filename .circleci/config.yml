@@ -91,7 +91,7 @@ jobs:
       - run: |
           aws cloudformation deploy \
           --template-file bucket.yml \
-          --stack-name "acsr-${CIRCLE_WORKFLOW_ID:0:7}" \
+          --stack-name "${CIRCLE_WORKFLOW_ID:0:7}" \
           --parameter-overrides NAME=${CIRCLE_WORKFLOW_ID:0:7}
       - run: |
           aws s3 sync . s3://"${CIRCLE_WORKFLOW_ID:0:7}" --delete
@@ -128,8 +128,9 @@ jobs:
     steps:
       - checkout
       - run: |
-          aws s3 rm "s3://${OldPipelineID}" --recursive
-          aws cloudformation delete-stack --stack-name "${OldPipelineID}"
+          OldPipelineID=$(cat ~/output.txt)
+          aws s3 rm s3://${OldPipelineID} --recursive
+          aws cloudformation delete-stack --stack-name ${OldPipelineID}
       - attach_workspace:
           at: ~/
 workflows:
