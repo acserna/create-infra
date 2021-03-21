@@ -1,25 +1,37 @@
 version: 2.1
 
+commands:
+  destroy_environments:
+    steps:
+      - run:
+        name: Destroy environment
+        command: |
+          aws cloudformation delete-stack --stack-name prod-${CIRCLE_WORKFLOW_ID}
+
 jobs:
-  configure_infrastructure:
+  create_infrastructure:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: amazon/aws-cli
     steps:
       - checkout
-      - add_ssh_keys:
-          fingerprints: [
-            "3f:d4:99:48:7a:39:4c:10:b4:ce:fd:0f:13:25:b3:32"
-          ] # You can get this ID in the section where you registered the SSH Key
       - run:
-          name: Install dependencies
+          name: Ensure backend infrastructure exist
           command: |
-            apk add --update ansible # install the dependencies needed for your playbook
+            aws cloudformation deploy \
+              --template-file template.yml \
+              --stack-name prod-${CIRCLE_WORKFLOW_ID}
+  fallar:
+    docker:
+      - image: 
+    steps:
       - run:
-          name: Configure server
-          command: |
-            ansible-playbook -i inventory.txt playbook.yml
-
+        name: error simulado
+        command: |
+          return 1
+      - destroy_environments:
+        when: on_fail
 workflows:
   my_workflow:
     jobs:
-      - configure_infrastructure
+      - create_infrastructure
+      - fallar
