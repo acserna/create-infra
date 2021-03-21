@@ -26,9 +26,8 @@ jobs:
           command: |
             return 1
       - destroy_environment
-      
+
 workflows:
   my_workflow:
     jobs:
       - create_infrastructure
-      - fallar
