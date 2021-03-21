@@ -28,7 +28,7 @@ jobs:
         name: error simulado
         command: |
           return 1
-      - destroy_environments:
+      - destroy_environments
         when: on_fail
 workflows:
   my_workflow:
