@@ -25,12 +25,17 @@ jobs:
       - run: |
           aws cloudformation \
             list-exports --query "Exports[?Name==\`PipelineID\`].Value" \
-            --no-paginate --output text  >> ~/output.txt
-          cat ~/output.txt
+            --no-paginate --output text  >> ~/deployment_id.txt
+          cat ~/deployment_id.txt
+          aws cloudformation \
+            list-exports --query "Exports[?Name==\`StackName\`].Value" \
+            --no-paginate --output text > ~/stack_name.txt
+          cat ~/stack_name.txt
       - persist_to_workspace:
           root: ~/
           paths:
-            - output.txt
+            - deployment_id.txt
+            - stack_name.txt
 
   promote_to_production:
     docker:
@@ -41,7 +46,7 @@ jobs:
           aws cloudformation deploy \
             --template-file cloudfront.yml \
             --stack-name production-distro \
-            --parameter-overrides PipelineID=${CIRCLE_WORKFLOW_ID}
+            --parameter-overrides PipelineID="acsr-${CIRCLE_WORKFLOW_ID}"
     
   clean_up_old_front_end:
     docker:
@@ -49,9 +54,12 @@ jobs:
     steps:
       - checkout
       - run: |
-          OldPipelineID=$(cat ~/output.txt)
+          OldPipelineID=$(cat ~/deployment_id.txt)
+          echo $OldPipelineID
+          PreviousStackName=$(cat ~/stack_name.txt)
+          echo $PreviousStackName
           aws s3 rm s3://${OldPipelineID} --recursive
-          aws cloudformation delete-stack --stack-name ${OldPipelineID}
+          aws cloudformation delete-stack --stack-name ${PreviousStackName}
       - attach_workspace:
           at: ~/
 workflows:
